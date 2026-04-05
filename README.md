@@ -10,7 +10,7 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://react.dev)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[Live Demo](#) · [Documentation](docs/) · [Report a Bug](https://github.com/SdSarthak/AegisAI/issues) · [Request a Feature](https://github.com/SdSarthak/AegisAI/issues)
+[Getting Started](docs/getting-started.md) · [Architecture](docs/architecture.md) · [API Reference](docs/api-reference.md) · [Guard Module](docs/guard-module.md) · [RAG Module](docs/rag-module.md) · [Report a Bug](https://github.com/SdSarthak/AegisAI/issues)
 
 </div>
 
@@ -93,7 +93,7 @@ AegisAI/
 │   │   └── modules/
 │   │       ├── guard/       # LLM Guard — regex + ML classifier + sanitizer
 │   │       ├── rag/         # RAG — vector store, retrieval chain, MLflow
-│   │       └── llm/         # LLM client (Gemini)
+│   │       └── llm/         # LLM client (OpenAI-compatible)
 │   ├── data/                # Training data for Guard classifier
 │   └── tests/
 ├── frontend/                # React + TypeScript dashboard
