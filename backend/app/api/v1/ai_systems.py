@@ -119,7 +119,7 @@ def delete_ai_system(
 
 
 @router.post("/import", response_model=BulkImportResponse)
-async def bulk_import_systems(
+def bulk_import_systems(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -128,19 +128,40 @@ async def bulk_import_systems(
     errors = []
     created_count = 0
     
+    # Basic validation: check file extension
+    if not file.filename or not file.filename.lower().endswith('.csv'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid CSV format: File must have .csv extension"
+        )
+
     try:
-        content = await file.read()
+        content = file.file.read()
         decoded_content = content.decode("utf-8")
-        csv_reader = csv.DictReader(io.StringIO(decoded_content))
         
+        # Check if file is empty
+        if not decoded_content.strip():
+            return BulkImportResponse(created=0, errors=[])
+
+        f = io.StringIO(decoded_content)
+        csv_reader = csv.DictReader(f)
+        
+        # Check if we have headers
+        if not csv_reader.fieldnames:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid CSV format: No headers found"
+            )
+
         for row_num, row in enumerate(csv_reader, start=2):
-            row_errors = []
-            
-            if not row.get("name", "").strip():
+            # Skip empty rows
+            if not any(row.values()):
+                continue
+
+            name = row.get("name", "").strip()
+            if not name:
                 errors.append({"row": row_num, "error": "name is required"})
                 continue
-            
-            name = row["name"].strip()
             
             existing = db.query(AISystem).filter(
                 AISystem.owner_id == current_user.id,
@@ -167,16 +188,13 @@ async def bulk_import_systems(
         
         db.commit()
         
-    except csv.Error as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid CSV format: {str(e)}"
-        )
     except UnicodeDecodeError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be UTF-8 encoded CSV"
         )
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(
